@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var templates = template.Must(template.ParseFiles("tmpl/home.html", "tmpl/test.html", "tmpl/iFrame.html"))
+var templates = template.Must(template.ParseFiles("tmpl/home.html", "tmpl/test.html", "tmpl/conformance.json"))
 
 type server struct{}
 
@@ -25,6 +25,8 @@ func NewHTTPServer(addr string) *http.Server {
 	r.HandleFunc("/", s.handleRoot).Methods("GET")
 	r.HandleFunc("/test", s.handleTest).Methods("GET")
 	r.HandleFunc("/launch", s.handleLaunch).Methods("POST")
+
+	r.HandleFunc("/.well-known/smart-configuration", s.handleConfig).Methods("GET")
 
 	// register middleware
 	var handler http.Handler = r
@@ -77,4 +79,10 @@ func (s *server) handleLaunch(w http.ResponseWriter, r *http.Request) {
 
 	w.Write([]byte(iFrame))
 	//templates.ExecuteTemplate(w, "iframe.html", launchURL)
+}
+
+// handle well known config
+func (s *server) handleConfig(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	templates.ExecuteTemplate(w, "conformance.json", nil)
 }
