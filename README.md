@@ -1,0 +1,2 @@
+# smoke
+Test FHIR Launch
