@@ -73,15 +73,10 @@ type launchAndMeta struct {
 
 // TODO: I would like to make this a seperate server and compose them together with docker
 func (s *server) handleTest(w http.ResponseWriter, r *http.Request) {
-	iss, err := url.QueryUnescape(r.FormValue("iss"))
+	launch, err := fhir.ParseLaunch(r)
 	if err != nil {
-		w.Write([]byte("invalid iss"))
+		w.Write([]byte(err.Error()))
 	}
-	l, err := url.QueryUnescape(r.FormValue("launch"))
-	if err != nil {
-		w.Write([]byte("invalid launch"))
-	}
-	launch := fhir.Launch{Launch: l, ISS: iss}
 
 	resp, err := http.Get("http://" + launch.ISS + "/.well-known/smart-configuration")
 	if err != nil {
