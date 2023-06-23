@@ -8,6 +8,9 @@ import (
 	"net/url"
 	"text/template"
 
+	"github.com/google/uuid"
+	"github.com/journeybeforedestination/smoke/fhir"
+
 	"github.com/gorilla/mux"
 )
 
@@ -61,8 +64,12 @@ func (s *server) handleRoot(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "home.html", nil)
 }
 
+// TODO: I would like to make this a seperate server and compose them together with docker
 func (s *server) handleTest(w http.ResponseWriter, r *http.Request) {
-	templates.ExecuteTemplate(w, "test.html", nil)
+	iss := r.FormValue("iss")
+	l := r.FormValue("launch")
+	launch := fhir.Launch{Launch: l, ISS: iss}
+	templates.ExecuteTemplate(w, "test.html", launch)
 }
 
 // handleLaunch handles sumbission of a launch
@@ -75,6 +82,12 @@ func (s *server) handleLaunch(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Invalid URL"))
 		return
 	}
+
+	l := uuid.NewString()
+	iss := r.Host
+	launch := fhir.Launch{Launch: l, ISS: iss}
+	launchURL = fmt.Sprintf("%s?%s", launchURL, launch.Params())
+
 	iFrame := fmt.Sprintf(`<iframe id="launch-iframe" src="%s"></iframe>`, launchURL)
 
 	w.Write([]byte(iFrame))
