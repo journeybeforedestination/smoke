@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	s := NewHTTPServer(":8080")
+	s := NewFhirServer(":8080")
 	log.Fatal(s.ListenAndServe())
 }

@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -11,18 +11,17 @@ import (
 	"text/template"
 
 	"github.com/google/uuid"
-	"github.com/journeybeforedestination/smoke/fhir"
-
 	"github.com/gorilla/mux"
+	"github.com/journeybeforedestination/smoke/fhir"
 )
 
 var templates = template.Must(template.ParseFiles("tmpl/home.html", "tmpl/test.html", "tmpl/conformance.json"))
 
-type server struct{}
+type fhirServer struct{}
 
-// NewHTTPServer creates an http server
-func NewHTTPServer(addr string) *http.Server {
-	s := &server{}
+// NewFhirServer creates a fhir server that can test app launch
+func NewFhirServer(addr string) *http.Server {
+	s := &fhirServer{}
 
 	r := mux.NewRouter()
 
@@ -30,6 +29,7 @@ func NewHTTPServer(addr string) *http.Server {
 	r.HandleFunc("/", s.handleRoot).Methods("GET")
 	r.HandleFunc("/test", s.handleTest).Methods("GET")
 	r.HandleFunc("/launch", s.handleLaunch).Methods("POST")
+	r.HandleFunc("/authorize", s.handleAuth).Methods("GET")
 
 	r.HandleFunc("/.well-known/smart-configuration", s.handleConfig).Methods("GET")
 
@@ -62,17 +62,13 @@ func logRequestHandler(h http.Handler) http.Handler {
 }
 
 // handleRoot handles the root path "/"
-func (s *server) handleRoot(w http.ResponseWriter, r *http.Request) {
+func (s *fhirServer) handleRoot(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "home.html", nil)
 }
 
-type launchAndMeta struct {
-	Launch fhir.Launch
-	Meta   fhir.Conformance
-}
-
 // TODO: I would like to make this a seperate server and compose them together with docker
-func (s *server) handleTest(w http.ResponseWriter, r *http.Request) {
+// TODO: figure out how I want to log data here
+func (s *fhirServer) handleTest(w http.ResponseWriter, r *http.Request) {
 	launch, err := fhir.ParseLaunch(r)
 	if err != nil {
 		w.Write([]byte(err.Error()))
@@ -85,7 +81,7 @@ func (s *server) handleTest(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		w.Write([]byte("Error reading metadata"))
 		return
@@ -98,12 +94,13 @@ func (s *server) handleTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	both := launchAndMeta{Launch: launch, Meta: conformance}
-	templates.ExecuteTemplate(w, "test.html", both)
+	http.Redirect(w, r, conformance.AuthEndpoint, http.StatusFound)
+	// both := launchAndMeta{Launch: launch, Meta: conformance}
+	// templates.ExecuteTemplate(w, "test.html", both)
 }
 
 // handleLaunch handles sumbission of a launch
-func (s *server) handleLaunch(w http.ResponseWriter, r *http.Request) {
+func (s *fhirServer) handleLaunch(w http.ResponseWriter, r *http.Request) {
 	launchURL := r.FormValue("launch-url")
 
 	// Check if the launch URL is valid
@@ -125,7 +122,12 @@ func (s *server) handleLaunch(w http.ResponseWriter, r *http.Request) {
 }
 
 // handle well known config
-func (s *server) handleConfig(w http.ResponseWriter, r *http.Request) {
+func (s *fhirServer) handleConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	templates.ExecuteTemplate(w, "conformance.json", nil)
+}
+
+// handleAuth performs a very limited test OAuth2 check
+func (s *fhirServer) handleAuth(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("<h1>Authorizing...</h1>"))
 }
