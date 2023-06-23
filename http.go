@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -64,12 +66,45 @@ func (s *server) handleRoot(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "home.html", nil)
 }
 
+type launchAndMeta struct {
+	Launch fhir.Launch
+	Meta   fhir.Conformance
+}
+
 // TODO: I would like to make this a seperate server and compose them together with docker
 func (s *server) handleTest(w http.ResponseWriter, r *http.Request) {
-	iss := r.FormValue("iss")
-	l := r.FormValue("launch")
+	iss, err := url.QueryUnescape(r.FormValue("iss"))
+	if err != nil {
+		w.Write([]byte("invalid iss"))
+	}
+	l, err := url.QueryUnescape(r.FormValue("launch"))
+	if err != nil {
+		w.Write([]byte("invalid launch"))
+	}
 	launch := fhir.Launch{Launch: l, ISS: iss}
-	templates.ExecuteTemplate(w, "test.html", launch)
+
+	resp, err := http.Get("http://" + launch.ISS + "/.well-known/smart-configuration")
+	if err != nil {
+		w.Write([]byte("Error fetching metadata"))
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		w.Write([]byte("Error reading metadata"))
+		return
+	}
+
+	var conformance fhir.Conformance
+	err = json.Unmarshal([]byte(body), &conformance)
+	if err != nil {
+		w.Write([]byte("Error parsing metadata"))
+		return
+	}
+
+	both := launchAndMeta{Launch: launch, Meta: conformance}
+	templates.ExecuteTemplate(w, "test.html", both)
 }
 
 // handleLaunch handles sumbission of a launch
