@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Sizzle</title>
+
+    <script
+      src="https://unpkg.com/htmx.org@1.9.2"
+      integrity="sha384-L6OqL9pRWyyFU3+/bjdSri+iIphTN/bvYyM37tICVyOJkWZLpP2vGn6VUEXgzg6h"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+
+  <body>
+    <main>
+      <h1>Launch URL Form</h1>
+      <form
+        hx-post="/launch"
+        hx-trigger="submit"
+        hx-target="#response"
+        hx-swap="outerHTML"
+      >
+        <label for="launch-url">Launch URL:</label>
+        <input type="text" id="launch-url" name="launch-url" required />
+        <button type="submit">Launch</button>
+      </form>
+
+      <div id="response">
+        <!-- Placeholder for response -->
+      </div>
+    </main>
+  </body>
+</html>
