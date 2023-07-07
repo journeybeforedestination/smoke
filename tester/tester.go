@@ -68,14 +68,14 @@ func (s *testServer) handleLaunch(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		w.Write([]byte("Error reading metadata"))
+		w.Write([]byte("Error reading metadata: " + err.Error()))
 		return
 	}
 
 	var conformance fhir.Conformance
 	err = json.Unmarshal([]byte(body), &conformance)
 	if err != nil {
-		w.Write([]byte("Error parsing metadata"))
+		w.Write([]byte("Error parsing metadata " + err.Error()))
 		return
 	}
 
