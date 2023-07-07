@@ -80,6 +80,4 @@ func (s *testServer) handleLaunch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, conformance.AuthEndpoint, http.StatusFound)
-	// both := launchAndMeta{Launch: launch, Meta: conformance}
-	// templates.ExecuteTemplate(w, "test.html", both)
 }
