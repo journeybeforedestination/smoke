@@ -15,7 +15,7 @@ import (
 	"github.com/journeybeforedestination/smoke/fhir"
 )
 
-var templates = template.Must(template.ParseFiles("../../launcher/tmpl/home.html", "../../launcher/tmpl/test.html", "../../launcher/tmpl/conformance.json"))
+var templates = template.Must(template.ParseFiles("../../launcher/tmpl/home.html", "../../launcher/tmpl/conformance.json"))
 
 type fhirServer struct{}
 

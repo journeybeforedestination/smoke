@@ -1,0 +1,13 @@
+version: '2'
+services:
+  launcher:
+    build:
+      dockerfile: launcher.dockerfile
+    ports:
+      - 8080:8080
+  tester:
+    build:
+      dockerfile: tester.dockerfile
+    ports:
+      - 8081:8081
+  
